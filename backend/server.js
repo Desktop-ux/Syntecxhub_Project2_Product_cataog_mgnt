@@ -4,6 +4,7 @@ const cors = require("cors");
 const connectDB = require("./config/db.js");
 const productRoutes = require("./routes/productRoutes");
 const authRoutes = require("./routes/authRoutes");
+const errorHandler = require("./middleware/errorMiddleware");
 
 dotenv.config();
 
@@ -22,6 +23,8 @@ app.get("/", (req, res) => {
     message: "Product Catalog API is running",
   });
 });
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
