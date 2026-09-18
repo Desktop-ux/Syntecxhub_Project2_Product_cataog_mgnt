@@ -4,8 +4,10 @@ import "./App.css";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ProductForm from "./components/ProductForm";
+import CategorySummary from "./components/CategorySummary";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -14,12 +16,46 @@ function App() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem("token")
   );
 
   const [showRegister, setShowRegister] = useState(false);
+
+  const handleAddProduct = () => {
+    setEditingProduct(null);
+    setShowProductForm(true);
+  };
+
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    setShowProductForm(true);
+  };
+
+  const handleDeleteProduct = async (id) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.delete(`${API_URL}/products/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      fetchProducts();
+    } catch (error) {
+      console.error("Failed to delete product", error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -103,7 +139,9 @@ function App() {
             </p>
           </div>
 
-          <button className="add-button">+ Add Product</button>
+          <button className="add-button" onClick={handleAddProduct}>
+            + Add Product
+          </button>
         </section>
 
         <section className="stats">
@@ -193,8 +231,13 @@ function App() {
                       <span>{product.brand}</span>
 
                       <div>
-                        <button>✏️</button>
-                        <button>🗑️</button>
+                        <button onClick={() => handleEditProduct(product)}>
+                          ✏️
+                        </button>
+
+                        <button onClick={() => handleDeleteProduct(product._id)}>
+                          🗑️
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -229,7 +272,22 @@ function App() {
             </button>
           </div>
         </section>
+
+        <CategorySummary />
+        {showProductForm && (
+        <ProductForm
+          product={editingProduct}
+          onClose={() => {
+            setShowProductForm(false);
+            setEditingProduct(null);
+          }}
+          onSaved={() => {
+            fetchProducts();
+          }}
+        />
+      )}
       </main>
+      
     </div>
   );
 }
